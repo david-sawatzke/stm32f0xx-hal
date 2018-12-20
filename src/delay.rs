@@ -47,9 +47,13 @@ impl DelayMs<u8> for Delay {
 
 impl DelayUs<u32> for Delay {
     fn delay_us(&mut self, us: u32) {
-        let rvr = us * (self.clocks.sysclk().0 / 1_000_000);
+        let mut rvr = us * (self.clocks.sysclk().0 / 1_000_000);
 
-        assert!(rvr < (1 << 24));
+        const MAX: u32 = (1 << 24) - 1;
+        while rvr > MAX {
+            self.delay_us(MAX);
+            rvr -= MAX;
+        }
 
         self.syst.set_reload(rvr);
         self.syst.clear_current();
