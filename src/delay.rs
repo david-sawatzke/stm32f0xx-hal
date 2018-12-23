@@ -40,6 +40,7 @@ pub struct Delay {
 
 impl Delay {
     /// Configures the system timer (SysTick) as a delay provider
+    #[inline(always)]
     pub fn new(mut syst: SYST, clocks: Clocks) -> Self {
         syst.set_clock_source(SystClkSource::Core);
 
@@ -47,6 +48,7 @@ impl Delay {
     }
 
     /// Releases the system timer (SysTick) resource
+    #[inline(always)]
     pub fn free(self) -> SYST {
         self.syst
     }
@@ -54,6 +56,7 @@ impl Delay {
 
 impl DelayMs<u32> for Delay {
     // At 48 MHz, calling delay_us with ms * 1_000 directly overflows at 0x15D868 (just over the max u16 value)
+    #[inline(always)]
     fn delay_ms(&mut self, mut ms: u32) {
         const MAX_MS: u32 = 0x0000_FFFF;
         while ms != 0 {
@@ -65,27 +68,31 @@ impl DelayMs<u32> for Delay {
 }
 
 impl DelayMs<u16> for Delay {
+    #[inline(always)]
     fn delay_ms(&mut self, ms: u16) {
         self.delay_us(ms as u32 * 1_000);
     }
 }
 
 impl DelayMs<u8> for Delay {
+    #[inline(always)]
     fn delay_ms(&mut self, ms: u8) {
         self.delay_ms(u16(ms));
     }
 }
 
 impl DelayUs<u32> for Delay {
+    #[inline(always)]
     fn delay_us(&mut self, us: u32) {
         // The SysTick Reload Value register supports values between 1 and 0x00FFFFFF.
         const MAX_RVR: u32 = 0x00FF_FFFF;
 
-        let mut total_rvr = if self.clocks.sysclk().0 < 1_000_000 {
+        let mut total_rvr = /*if self.clocks.sysclk().0 < 1_000_000 {
             us / (1_000_00 / self.clocks.sysclk().0)
-        } else {
-            us * (self.clocks.sysclk().0 / 1_000_000)
-        };
+        } else {*/
+            ((us as u64 * self.clocks.sysclk().0 as u64 ) / 1_000_000) as u32
+            // us * (self.clocks.sysclk().0 / 1_000_000)
+        ;
 
         while total_rvr != 0 {
             let current_rvr = if total_rvr <= MAX_RVR {
@@ -109,12 +116,14 @@ impl DelayUs<u32> for Delay {
 }
 
 impl DelayUs<u16> for Delay {
+    #[inline(always)]
     fn delay_us(&mut self, us: u16) {
         self.delay_us(u32(us))
     }
 }
 
 impl DelayUs<u8> for Delay {
+    #[inline(always)]
     fn delay_us(&mut self, us: u8) {
         self.delay_us(u32(us))
     }

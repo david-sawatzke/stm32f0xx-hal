@@ -14,6 +14,7 @@ pub trait RccExt {
 
 #[cfg(any(feature = "stm32f042", feature = "stm32f030", feature = "stm32f070"))]
 impl RccExt for RCC {
+    #[inline(always)]
     fn constrain(self) -> Rcc {
         Rcc {
             cfgr: CFGR {
@@ -40,6 +41,7 @@ pub struct CFGR {
 
 #[cfg(any(feature = "stm32f042", feature = "stm32f030", feature = "stm32f070"))]
 impl CFGR {
+    #[inline(always)]
     pub fn hclk<F>(mut self, freq: F) -> Self
     where
         F: Into<Hertz>,
@@ -48,6 +50,7 @@ impl CFGR {
         self
     }
 
+    #[inline(always)]
     pub fn pclk<F>(mut self, freq: F) -> Self
     where
         F: Into<Hertz>,
@@ -56,6 +59,7 @@ impl CFGR {
         self
     }
 
+    #[inline(always)]
     pub fn sysclk<F>(mut self, freq: F) -> Self
     where
         F: Into<Hertz>,
@@ -63,7 +67,7 @@ impl CFGR {
         self.sysclk = Some(freq.into().0);
         self
     }
-
+    #[inline(always)]
     pub fn freeze(self) -> Clocks {
         let pllmul = (4 * self.sysclk.unwrap_or(HSI) + HSI) / HSI / 2;
         let pllmul = cmp::min(cmp::max(pllmul, 2), 16);
